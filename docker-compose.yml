@@ -1,0 +1,84 @@
+version: "3.0"
+
+volumes:
+  Mongo-Keys:
+  Mongo-Data-0:
+  Mongo-Data-1:
+  Mongo-Data-2:
+  Mongo-Data-3:
+
+networks:
+  Mongo-Replica-Network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.10.5.0/24
+
+services:
+
+  Mongo-Keys:
+    image: depop/openssl-bats
+    volumes:
+      - Mongo-Keys:/mongo-conf
+    command: 'bash -c "openssl rand -base64 741 > /mongo-conf/mongodb-keyfile; chmod 600 /mongo-conf/mongodb-keyfile; chown 999 /mongo-conf/mongodb-keyfile"'
+
+  Mongo-Primary:
+    image: mongo:latest
+    volumes:
+      - Mongo-Keys:/opt/keyfile
+      - Mongo-Data-0:/data/db
+    env_file:
+      ./mongod.env
+    ports:
+      - 27017:27017
+    command: 'mongod --auth --keyFile /opt/keyfile/mongodb-keyfile --replSet Set-Name'
+    depends_on:
+        - Mongo-Keys
+    networks:
+      Mongo-Replica-Network:
+  
+  Mongo-1:
+    image: mongo:latest
+    volumes:
+      - Mongo-Keys:/opt/keyfile
+      - Mongo-Data-1:/data/db
+    env_file:
+      ./mongod.env
+    ports:
+      - 27018:27017
+    command: 'mongod --auth --keyFile /opt/keyfile/mongodb-keyfile --replSet Set-Name'
+    depends_on:
+        - Mongo-Keys
+    networks:
+      Mongo-Replica-Network:
+  
+  Mongo-2:
+    image: mongo:latest
+    volumes:
+      - Mongo-Keys:/opt/keyfile
+      - Mongo-Data-2:/data/db
+    env_file:
+      ./mongod.env
+    ports:
+      - 27019:27017
+    command: 'mongod --auth --keyFile /opt/keyfile/mongodb-keyfile --replSet Set-Name'
+    depends_on:
+        - Mongo-Keys
+    networks:
+      Mongo-Replica-Network:
+  
+  Mongo-3:
+    image: mongo:latest
+    volumes:
+      - Mongo-Keys:/opt/keyfile
+      - Mongo-Data-3:/data/db
+    env_file:
+      ./mongod.env
+    ports:
+      - 27020:27017
+    command: 'mongod --auth --keyFile /opt/keyfile/mongodb-keyfile --replSet Set-Name'
+    depends_on:
+        - Mongo-Keys
+    networks:
+      Mongo-Replica-Network:
